@@ -1,0 +1,199 @@
+<mxfile host="app.diagrams.net" modified="2026-09-17T12:00:00.000Z" agent="Cursor" version="22.1.0" type="device">
+  <diagram id="fuel-ivr" name="Топливо — логика обзвона IVR">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="2100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="Топливо: логика обзвона IVR (от задачи до статуса)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="560" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend" value="Жёлтый = вопрос / пробел в БТ&#xa;Зелёный = успешное завершение&#xa;Красный = завершение без успеха&#xa;A/B не применяется (новый процесс)" style="rounded=0;whiteSpace=wrap;html=1;align=left;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="20" width="280" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="a" value="Старт: 1-й рабочий день M+1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="110" width="240" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="b" value="Формирование МК&#xa;«Напоминания по топливной программе»" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="190" width="260" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ab" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="c" value="Отбор клиентов:&#xa;неоплаченное обязательство&#xa;+ без просрочки&#xa;+ без старых долгов" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="280" width="260" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_bc" edge="1" parent="1" source="b" target="c"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="d" value="1 клиент = 1 запись в МК" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="390" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_cd" edge="1" parent="1" source="c" target="d"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="e" value="Случайный отбор ~100 клиентов&#xa;в пилот (не A/B)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="460" width="240" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_de" edge="1" parent="1" source="d" target="e"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="f" value="Передать признак актуальности&#xa;обязательства (бинарное поле)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="540" width="240" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ef" edge="1" parent="1" source="e" target="f"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="g" value="1 клиент = 1 задача" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="520" y="620" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_fg" edge="1" parent="1" source="f" target="g"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="h" value="Очередь обзвона" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="690" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_gh" edge="1" parent="1" source="g" target="h"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="i" value="День рабочий?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="545" y="760" width="150" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_hi" edge="1" parent="1" source="h" target="i"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="j" value="Не звоним&#xa;(выходной/праздник)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="780" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ij" edge="1" parent="1" source="i" target="j" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_jh" edge="1" parent="1" source="j" target="h"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="710"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="k" value="Время по TZ клиента&#xa;рабочее?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="535" y="880" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ik" edge="1" parent="1" source="i" target="k" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="l" value="Ждать" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="900" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_kl" edge="1" parent="1" source="k" target="l" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_lh" edge="1" parent="1" source="l" target="h"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="920"/><mxPoint x="200" y="710"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="m" value="? Когда стартовать:&#xa;сразу с утра / равномерно / слоты?" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="510" y="1000" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_km" edge="1" parent="1" source="k" target="m" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="n" value="Взять задачу" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="1090" width="160" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_mn" edge="1" parent="1" source="m" target="n"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="o" value="Перед попыткой:&#xa;проверка актуальности" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1160" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_no" edge="1" parent="1" source="n" target="o"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="p" value="Обязательство&#xa;актуально?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="535" y="1240" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_op" edge="1" parent="1" source="o" target="p"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="q" value="Результат:&#xa;Обязательство погашено до звонка&#xa;Задача успешно завершена" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="200" y="1240" width="240" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_pq" edge="1" parent="1" source="p" target="q" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="s" value="Приоритет контактов:&#xa;1) ОКПл + ЛП&#xa;2) ГД&#xa;3) бухгалтер" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="1240" width="200" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ps" edge="1" parent="1" source="p" target="s" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="t" value="Есть следующий&#xa;контакт?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="795" y="1360" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_st" edge="1" parent="1" source="s" target="t"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="u" value="Не дозвонились&#xa;Задача завершена" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="1370" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_tu" edge="1" parent="1" source="t" target="u" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="v" value="Есть мобильный?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="800" y="1480" width="160" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_tv" edge="1" parent="1" source="t" target="v" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_vt" edge="1" parent="1" source="v" target="t" value="Нет"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="1515"/><mxPoint x="760" y="1400"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="w" value="? Несколько мобильных:&#xa;1 номер или все по очереди?" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="500" y="1480" width="220" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_vw" edge="1" parent="1" source="v" target="w" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="x" value="Выбрать номер" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="1580" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_wx" edge="1" parent="1" source="w" target="x"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="y" value="Попытки по контакту &lt; 2?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1650" width="180" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_xy" edge="1" parent="1" source="x" target="y"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_yt" edge="1" parent="1" source="y" target="t" value="Нет"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="480" y="1690"/><mxPoint x="480" y="1400"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="z" value="Прошло ≥ 4 часа&#xa;с прошлой попытки?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="1760" width="180" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_yz" edge="1" parent="1" source="y" target="z" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="aa" value="Ждать 4 часа" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="1780" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_zaa" edge="1" parent="1" source="z" target="aa" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_aao" edge="1" parent="1" source="aa" target="o"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="1800"/><mxPoint x="200" y="1185"/><mxPoint x="520" y="1185"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="ab" value="Снова проверка актуальности&#xa;перед звонком" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="780" y="1760" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_zab" edge="1" parent="1" source="z" target="ab" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="ac" value="Актуально?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1840" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_abac" edge="1" parent="1" source="ab" target="ac"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_acq" edge="1" parent="1" source="ac" target="q" value="Нет"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="890" y="1200"/><mxPoint x="320" y="1200"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="ad" value="Исходящий звонок IVR&#xa;(только сообщение, без меню)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="780" y="1940" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_acad" edge="1" parent="1" source="ac" target="ad" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="ae" value="Клиент&#xa;ответил?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="815" y="2020" width="150" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_adae" edge="1" parent="1" source="ad" target="ae"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="af" value="Результат: Не дозвонились" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="2035" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_aeaf" edge="1" parent="1" source="ae" target="af" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_afo" edge="1" parent="1" source="af" target="o" value="Ещё попытка"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1220" y="2055"/><mxPoint x="1220" y="1185"/></Array></mxGeometry></mxCell>
+
+        <mxCell id="ah" value="Воспроизведение текста" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="2035" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_aeah" edge="1" parent="1" source="ae" target="ah" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="ai" value="Дослушал до 1-й&#xa;смысловой части?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="545" y="2110" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ahai" edge="1" parent="1" source="ah" target="ai"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="aj" value="Результат: Сообщение не прослушано&#xa;? След. попытка / контакт / стоп?" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="220" y="2120" width="250" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_aiaj" edge="1" parent="1" source="ai" target="aj" value="Нет"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="al" value="Результат: Сообщение прослушано&#xa;Задача успешно завершена&#xa;Другие контакты НЕ звоним" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="780" y="2110" width="240" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_aial" edge="1" parent="1" source="ai" target="al" value="Да"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
