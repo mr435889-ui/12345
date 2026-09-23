@@ -1,146 +1,177 @@
 --=========================================================================
 -- Скрипт: интервалы между звонками + redial-отчёты
--- Правки:
---   1) coalesce(payload_type) для канала «Входящий»
---   2) окно 03:00–18:00 и в calls_by_interaction
---   3) подписи таблиц 5–7 согласованы с фильтром
---   4) индексы + analyze на temp
---   5) redial: prev_slice без дублирующих мёртвых флагов
---   6) join по Канал через IS NOT DISTINCT FROM
+-- Верх воронки нарезан на отдельные temp (можно гонять по шагам и замерять время)
 --=========================================================================
 
 
 --=========================================================================
--- 1) витрина звонков
+-- 1.1) задачи
+--=========================================================================
+drop table if exists tmp_tasks;
+create temp table tmp_tasks as
+select
+    lt.id as task_id,
+    lt.campaign,
+    lt.payload_type,
+    lt.status,
+    lt.created_at
+from voipclient.leasing_task lt
+where lt.status in (122, 233);
+
+create unique index on tmp_tasks (task_id);
+create index on tmp_tasks (campaign);
+analyze tmp_tasks;
+
+
+--=========================================================================
+-- 1.2) интеракции задач
+--=========================================================================
+drop table if exists tmp_interactions;
+create temp table tmp_interactions as
+select distinct
+    t.task_id,
+    li.id as interaction_id,
+    li.contact,
+    li.started as interaction_started,
+    li.ended   as interaction_ended
+from tmp_tasks t
+join voipclient.leasing_interaction li
+  on li.task = t.task_id
+where (li."operator" is null or li."operator" <> 1)
+  and li.ended is not null
+  and li.started between timestamp '2026-09-14' and timestamp '2027-01-01'
+  and li.started::time >= time '03:00:00'
+  and li.started::time <  time '18:00:00';
+
+create unique index on tmp_interactions (interaction_id);
+create index on tmp_interactions (task_id, contact);
+create index on tmp_interactions (contact);
+analyze tmp_interactions;
+
+
+--=========================================================================
+-- 1.3) звонки по payload.taskId (основной путь)
+--=========================================================================
+drop table if exists tmp_calls_by_task;
+create temp table tmp_calls_by_task as
+select
+    t.task_id,
+    hc.id as call_id,
+    hc.contact,
+    hc.phone_number,
+    hc.started as call_started,
+    hc.ended   as call_ended,
+    hc.initiator,
+    'task'::text as call_source,
+    1 as source_priority
+from tmp_tasks t
+join voipclient.history_call hc
+  on (hc.payload->>'taskId')::bigint = t.task_id
+where hc.ended is not null
+  and hc.started between timestamp '2026-09-14' and timestamp '2027-01-01'
+  and hc.started::time >= time '03:00:00'
+  and hc.started::time <  time '18:00:00';
+
+create index on tmp_calls_by_task (call_id);
+create index on tmp_calls_by_task (task_id);
+analyze tmp_calls_by_task;
+
+
+--=========================================================================
+-- 1.4) звонки по contact + окно интеракции (добор)
+--=========================================================================
+drop table if exists tmp_calls_by_interaction;
+create temp table tmp_calls_by_interaction as
+select
+    i.task_id,
+    hc.id as call_id,
+    hc.contact,
+    hc.phone_number,
+    hc.started as call_started,
+    hc.ended   as call_ended,
+    hc.initiator,
+    'interaction'::text as call_source,
+    2 as source_priority
+from tmp_interactions i
+join voipclient.history_call hc
+  on hc.contact = i.contact
+where hc.ended is not null
+  and hc.contact is not null
+  and hc.started between timestamp '2026-09-14' and timestamp '2027-01-01'
+  and hc.started::time >= time '03:00:00'
+  and hc.started::time <  time '18:00:00'
+  and hc.started <  i.interaction_ended
+  and hc.ended   >  i.interaction_started
+  and (
+        hc.payload->>'taskId' is null
+     or (hc.payload->>'taskId')::bigint = i.task_id
+  );
+
+create index on tmp_calls_by_interaction (call_id);
+create index on tmp_calls_by_interaction (task_id);
+analyze tmp_calls_by_interaction;
+
+
+--=========================================================================
+-- 1.5) dedup: один call_id, приоритет task > interaction
+--=========================================================================
+drop table if exists tmp_all_calls_dedup;
+create temp table tmp_all_calls_dedup as
+select distinct on (u.call_id)
+    u.task_id,
+    u.call_id,
+    u.contact,
+    u.phone_number,
+    u.call_started,
+    u.call_ended,
+    u.initiator,
+    u.call_source,
+    t.campaign,
+    t.payload_type,
+    t.created_at as task_created_at
+from (
+    select * from tmp_calls_by_task
+    union all
+    select * from tmp_calls_by_interaction
+) u
+join tmp_tasks t
+  on t.task_id = u.task_id
+order by u.call_id, u.source_priority, u.call_started;
+
+create unique index on tmp_all_calls_dedup (call_id);
+create index on tmp_all_calls_dedup (task_id, contact);
+analyze tmp_all_calls_dedup;
+
+
+--=========================================================================
+-- 1.6) all_calls: к звонку клеим interaction_id
 --=========================================================================
 drop table if exists all_calls;
 create temp table all_calls as
-with tasks as (
-    select
-        lt.id as task_id,
-        lt.campaign,
-        lt.payload_type,
-        lt.status,
-        lt.created_at
-    from voipclient.leasing_task lt
-    where lt.status in (122, 233)
-),
-
-interactions as (
-    select distinct
-        t.task_id,
-        li.id as interaction_id,
-        li.contact,
-        li.started as interaction_started,
-        li.ended   as interaction_ended
-    from tasks t
-    join voipclient.leasing_interaction li
-      on li.task = t.task_id
-    where (li."operator" is null or li."operator" <> 1)
-      and li.ended is not null
-      and li.started between timestamp '2026-09-14' and timestamp '2027-01-01'
-      and li.started::time >= time '03:00:00'
-      and li.started::time <  time '18:00:00'
-),
-
-calls_by_task as (
-    select
-        t.task_id,
-        hc.id as call_id,
-        hc.contact,
-        hc.phone_number,
-        hc.started as call_started,
-        hc.ended   as call_ended,
-        hc.initiator,
-        'task'::text as call_source,
-        1 as source_priority
-    from tasks t
-    join voipclient.history_call hc
-      on (hc.payload->>'taskId')::bigint = t.task_id
-    where hc.ended is not null
-      and hc.started between timestamp '2026-09-14' and timestamp '2027-01-01'
-      and hc.started::time >= time '03:00:00'
-      and hc.started::time <  time '18:00:00'
-),
-
-calls_by_interaction as (
-    select
-        i.task_id,
-        hc.id as call_id,
-        hc.contact,
-        hc.phone_number,
-        hc.started as call_started,
-        hc.ended   as call_ended,
-        hc.initiator,
-        'interaction'::text as call_source,
-        2 as source_priority
-    from interactions i
-    join voipclient.history_call hc
-      on hc.contact = i.contact
-    where hc.ended is not null
-      and hc.contact is not null
-      and hc.started between timestamp '2026-09-14' and timestamp '2027-01-01'
-      and hc.started::time >= time '03:00:00'
-      and hc.started::time <  time '18:00:00'
-      and hc.started <  i.interaction_ended
-      and hc.ended   >  i.interaction_started
-      and (
-            hc.payload->>'taskId' is null
-         or (hc.payload->>'taskId')::bigint = i.task_id
-      )
-),
-
-all_calls_dedup as (
-    select distinct on (u.call_id)
-        u.task_id,
-        u.call_id,
-        u.contact,
-        u.phone_number,
-        u.call_started,
-        u.call_ended,
-        u.initiator,
-        u.call_source,
-        t.campaign,
-        t.payload_type,
-        t.created_at as task_created_at
-    from (
-        select * from calls_by_task
-        union all
-        select * from calls_by_interaction
-    ) u
-    join tasks t
-      on t.task_id = u.task_id
-    order by u.call_id, u.source_priority, u.call_started
-),
-
-all_calls_cte as (
-    select distinct on (ac.call_id)
-        ac.task_id,
-        ac.call_id,
-        ac.contact,
-        ac.phone_number,
-        ac.call_started,
-        ac.call_ended,
-        ac.initiator,
-        ac.call_source,
-        ac.campaign,
-        ac.payload_type,
-        ac.task_created_at,
-        i.interaction_id,
-        i.interaction_started,
-        i.interaction_ended
-    from all_calls_dedup ac
-    left join interactions i
-      on i.task_id = ac.task_id
-     and i.contact = ac.contact
-     and ac.call_started <  i.interaction_ended
-     and ac.call_ended   >  i.interaction_started
-    order by
-        ac.call_id,
-        i.interaction_started nulls last
-)
-select *
-from all_calls_cte;
+select distinct on (ac.call_id)
+    ac.task_id,
+    ac.call_id,
+    ac.contact,
+    ac.phone_number,
+    ac.call_started,
+    ac.call_ended,
+    ac.initiator,
+    ac.call_source,
+    ac.campaign,
+    ac.payload_type,
+    ac.task_created_at,
+    i.interaction_id,
+    i.interaction_started,
+    i.interaction_ended
+from tmp_all_calls_dedup ac
+left join tmp_interactions i
+  on i.task_id = ac.task_id
+ and i.contact = ac.contact
+ and ac.call_started <  i.interaction_ended
+ and ac.call_ended   >  i.interaction_started
+order by
+    ac.call_id,
+    i.interaction_started nulls last;
 
 create unique index on all_calls (call_id);
 create index on all_calls (task_id, phone_number, call_started);
