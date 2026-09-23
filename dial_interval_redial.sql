@@ -185,7 +185,7 @@ analyze all_calls;
 --=========================================================================
 drop table if exists callresults;
 create temp table callresults as
-select
+select distinct on (ac.call_id)
     ac.task_id as "Task_Id",
     ac.call_id as "call_id",
     ac.interaction_id,
@@ -198,7 +198,10 @@ left join voipclient.leasing_call_result lcr
 left join voipclient.configuration_status cs
   on cs.id = lcr.status
 left join voipclient.configuration_class cc
-  on cc.id = cs.class;
+  on cc.id = cs.class
+order by
+    ac.call_id,
+    lcr.id desc nulls last;  -- если несколько call_result на один call — берём последний
 
 create unique index on callresults ("call_id");
 analyze callresults;
